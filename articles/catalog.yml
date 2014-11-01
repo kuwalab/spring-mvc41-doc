@@ -2,5 +2,6 @@ PREDEF:
     - preface.re
 CHAPS:
     - firstStep.re
+    - request.re
 
 POSTDEF:
