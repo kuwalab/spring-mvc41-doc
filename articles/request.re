@@ -369,4 +369,128 @@ public class C004ControllerTest {
 }
 //}
 
+==={005} URLの一部をパラメータとして受け取る（複数パラメータ）
+
+@<b>{タグ【005】}
+
+URLをパラメータとする場合、そのパラメータは1つでなくても構いません。複数のパラメータを受け取ることができますし、パラメータとパラメータの間にURLの一部が混ざっていても問題ありません。
+
+具体的なサンプルは以下のとおりです。
+
+//list[005-C005Controller.java][C005Controller.java]{
+package com.example.spring.controller.c005;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+@RequestMapping("/c005")
+public class C005Controller {
+    @RequestMapping(value = "/pathVar1/{foo}/{bar}", method = RequestMethod.GET)
+    public String pathVar3(@PathVariable String foo, @PathVariable String bar) {
+        return "c005/pathVar";
+    }
+
+    @RequestMapping(value = "/pathVar2/{bar1}/{foo1}", method = RequestMethod.GET)
+    public String pathVar4(@PathVariable("bar1") String bar,
+            @PathVariable("foo1") String foo) {
+        return "c005/pathVar";
+    }
+
+    @RequestMapping(value = "/pathVar3/{foo}/param/{bar}", method = RequestMethod.GET)
+    public String pathVar5(@PathVariable String foo, @PathVariable String bar) {
+        return "c005/pathVar";
+    }
+}
+//}
+
+2つ目のurlpara4メソッドではパラメータの順番と受け取るメソッドの引数の順番を変えています。3つ目のurlparam5メソッドでは、fooパラメータとbarパラメータの間にリテラルのパスを含んでいます。
+
+このように、柔軟にパラメータの設定ができます。
+
+最後に表示用のpathVar.jspは以下になります。
+
+//list[005-pathVar.jsp][pathVar.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+fooの値は <c:out value="${foo}" /><br>
+barの値は <c:out value="${bar}" /><br>
+foo1の値は <c:out value="${foo1}" /><br>
+bar1の値は <c:out value="${bar1}" />
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[005-C005ControllerTest.java][C005Controller.java]{
+package com.example.spring.controller.c005;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C005ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void pathVar1_123_abcへのGET() throws Exception {
+        mockMvc.perform(get("/c005/pathVar1/123/abc"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c005/pathVar"))
+                .andExpect(request().attribute("foo", is("123")))
+                .andExpect(request().attribute("bar", is("abc")));
+    }
+
+    @Test
+    public void pathVar2_123_abcへのGET() throws Exception {
+        mockMvc.perform(get("/c005/pathVar2/123/abc"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c005/pathVar"))
+                .andExpect(request().attribute("bar1", is("123")))
+                .andExpect(request().attribute("foo1", is("abc")));
+    }
+
+    @Test
+    public void pathVar3_123_param_abcへのGET() throws Exception {
+        mockMvc.perform(get("/c005/pathVar3/123/param/abc"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c005/pathVar"))
+                .andExpect(request().attribute("foo", is("123")))
+                .andExpect(request().attribute("bar", is("abc")));
+    }
+}
+//}
+
 
