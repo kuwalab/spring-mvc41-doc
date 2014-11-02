@@ -618,3 +618,122 @@ public class C006ControllerTest {
     }
 }
 //}
+
+==={007} GETパラメータを受け取る
+
+@<b>{タグ【007】}
+
+今回はHttpServletRequestとSpringで用意されている、Reqeustのようなクラスです。WebRequestは色々便利に使えますが、今回はHttpServletRequestと同じ動きができるというところだけ確認します。
+
+//list[007-C007Controller.java][C007Controller.java]{
+package com.example.spring.controller.c007;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.context.request.WebRequest;
+
+@Controller
+@RequestMapping("/c007")
+public class C007Controller {
+    @RequestMapping("/req")
+    public String req(HttpServletRequest request, Model model) {
+        model.addAttribute("foo", request.getParameter("foo"));
+        return "c007/req";
+    }
+
+    @RequestMapping("/req2")
+    public String req2(WebRequest request, Model model) {
+        model.addAttribute("foo", request.getParameter("foo"));
+        return "c007/req";
+    }
+
+    @RequestMapping("/req3")
+    public String req3(NativeWebRequest request, Model model) {
+        model.addAttribute("foo", request.getParameter("foo"));
+        return "c007/req";
+    }
+}
+//}
+
+req.jspは以下です。
+
+//list[006-req.jsp][req.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+fooの値は <c:out value="${foo}" /><br>
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[006-C006ControllerTest.java][C006ControllerTest.java]{
+package com.example.spring.controller.c007;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C007ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void reqのGET() throws Exception {
+        mockMvc.perform(get("/c007/req").param("foo", "foo"))
+                .andExpect(status().isOk()).andExpect(view().name("c007/req"))
+                .andExpect(model().hasNoErrors())
+                .andExpect(request().attribute("foo", is("foo")));
+    }
+
+    @Test
+    public void req2のGET() throws Exception {
+        mockMvc.perform(get("/c007/req2").param("foo", "foo"))
+                .andExpect(status().isOk()).andExpect(view().name("c007/req"))
+                .andExpect(model().hasNoErrors())
+                .andExpect(request().attribute("foo", is("foo")));
+    }
+
+    @Test
+    public void req3のGET() throws Exception {
+        mockMvc.perform(get("/c007/req3").param("foo", "foo"))
+                .andExpect(status().isOk()).andExpect(view().name("c007/req"))
+                .andExpect(model().hasNoErrors())
+                .andExpect(request().attribute("foo", is("foo")));
+    }
+}
+//}
+
+
