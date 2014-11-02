@@ -983,3 +983,165 @@ public class C009ControllerTest {
 }
 //}
 
+==={010} ModelAttributeで受け取る
+
+@<b>{タグ【010】}
+
+今回は、リクエストパラメータを任意のオブジェクトで受け取ります。
+
+最初にデータを受け取るクラスを作成します。フィールド名は受け取るパラメータ名と同じにしておきます。
+
+//list[010-C010Model.java][C010Model.java]{
+package com.example.spring.controller.c010;
+
+public class C010Model {
+    private String name;
+    private String age;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAge() {
+        return age;
+    }
+
+    public void setAge(String age) {
+        this.age = age;
+    }
+}
+//}
+
+コントローラは、@ModelAttributeアノテーションを付けたクラスに、自動的に同名のフィールドにマッピングされます。また、@PathVariableアノテーションと同様に@ModelAttributeアノテーションを付けたインスタンスは、自動的にリクエストスコープに設定されます。@PathVariableと違うのは、オブジェクトそのものがリクエストスコープに設定される点です。
+
+//list[010-C010Controller.java][C010Controller.java]{
+package com.example.spring.controller.c010;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+@RequestMapping("/c010")
+public class C010Controller {
+    @RequestMapping("/modelForm")
+    public String modelForm() {
+        return "c010/modelForm";
+    }
+
+    @RequestMapping(value = "/modelRecv", method = RequestMethod.POST)
+    public String modelRecv(@ModelAttribute C010Model c010Model) {
+        return "c010/modelRecv";
+    }
+}
+//}
+
+データを送信する、modelForm.jspです。
+
+//list[010-modelForm.jsp][modelForm.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="modelRecv" method="post">
+   名前: <input type="text" name="name" size="20"><br>
+   年齢: <input type="text" name="age" size="20"><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+データを受信する、modelRecv.jspです。
+
+//list[010-modelRecv.jsp][modelRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+nameの値は <c:out value="${name}" /><br>
+ageの値は <c:out value="${age}" /><br>
+c010Model.nameの値は <c:out value="${c010Model.name}" /><br>
+c010Model.ageの値は <c:out value="${c010Model.age}" /><br>
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[010-C010ControllerTest.java][C010ControllerTest.java]{
+package com.example.spring.controller.c010;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C010ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void modelFormのGET() throws Exception {
+        mockMvc.perform(get("/c010/modelForm")).andExpect(status().isOk())
+                .andExpect(view().name("c010/modelForm"));
+    }
+
+    @Test
+    public void modelRecvのPOST() throws Exception {
+        MvcResult mvcResult = mockMvc
+                .perform(
+                        post("/c010/modelRecv").param("name", "abc").param(
+                                "age", "20")).andExpect(status().isOk())
+                .andExpect(view().name("c010/modelRecv"))
+                .andExpect(model().attributeExists("c010Model")).andReturn();
+
+        Map<String, Object> model = mvcResult.getModelAndView().getModel();
+        Object c010ModelObject = model.get("c010Model");
+        assertThat(c010ModelObject, is(notNullValue()));
+        assertThat(c010ModelObject, is(instanceOf(C010Model.class)));
+        C010Model c010Model = (C010Model) c010ModelObject;
+        assertThat(c010Model.getName(), is("abc"));
+        assertThat(c010Model.getAge(), is("20"));
+    }
+}
+//}
+
