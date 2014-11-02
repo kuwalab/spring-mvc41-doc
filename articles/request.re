@@ -493,4 +493,128 @@ public class C005ControllerTest {
 }
 //}
 
+==={006} リクエストボディをそのまま受け取る
 
+@<b>{タグ【006】}
+
+POSTリクエストのデータは、GETリクエストと同様に@RequestParamで受け取ることもできますが、リクエストボディの生データをそのまま受け取ることもできます。
+
+//list[006-C006Controller.java][C006Controller.java]{
+package com.example.spring.controller.c006;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+@RequestMapping("/c006")
+public class C006Controller {
+    @RequestMapping("/bodyForm")
+    public String bodyForm() {
+        return "c006/bodyForm";
+    }
+
+    @RequestMapping(value = "/bodyRecv", method = RequestMethod.POST)
+    public String bodyRecv(@RequestBody String body, Model model) {
+        model.addAttribute("body", body);
+        return "c006/bodyRecv";
+    }
+}
+//}
+
+リクエストボディは、@RequestBodyアノテーションを付けた引数で受け取ります。今回の場合だとリクエストボディがそのままStringのbodyに入ります。
+
+RequestBodyも必須かどうかはrequired属性で指定できます。
+
+POSTデータ送信用のJSP、bodyForm.jspです。
+
+//list[006-bodyForm.jsp][bodyForm.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="bodyRecv" method="post">
+   名前: <input type="text" name="name" size="20"><br>
+   年齢: <input type="text" name="age" size="20"><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+リクエストボディ表示用のbodyRecv.jspです。
+
+//list[006-bodyRecv.jsp][bodyRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+nameの値は <c:out value="${name}" /><br>
+ageの値は <c:out value="${age}" /><br>
+bodyの値は <c:out value="${body}" /><br>
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[006-C006ControllerTest.java][C006ControllerTest.java]{
+package com.example.spring.controller.c006;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C006ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void bodyFormのGET() throws Exception {
+        mockMvc.perform(get("/c006/bodyForm")).andExpect(status().isOk())
+                .andExpect(view().name("c006/bodyForm"));
+    }
+
+    @Test
+    public void bodyRecvのPOST() throws Exception {
+        mockMvc.perform(post("/c006/bodyRecv").content("name=test&age=33"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c006/bodyRecv"))
+                .andExpect(model().attributeExists("body"))
+                .andExpect(model().attribute("body", is("name=test&age=33")))
+                .andExpect(model().attributeDoesNotExist("name", "age"));
+    }
+}
+//}
