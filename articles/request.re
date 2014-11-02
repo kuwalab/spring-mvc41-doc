@@ -736,4 +736,128 @@ public class C007ControllerTest {
 }
 //}
 
+==={008} Reader／InputStreamで受け取る
+
+@<b>{タグ【008】}
+
+RequestBodyのデータをReaderやInputStreamで受け取ることができます。今回はより簡単なReaderで受け取っています。読み取った1行目のデータをレスポンスに返しています。
+
+//list[008-C008Controller.java][C008Controller.java]{
+package com.example.spring.controller.c008;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+@RequestMapping("/c008")
+public class C008Controller {
+    @RequestMapping("/readerForm")
+    public String readerForm() {
+        return "c008/readerForm";
+    }
+
+    @RequestMapping(value = "/readerRecv", method = RequestMethod.POST)
+    public String readerRecv(BufferedReader reader, Model model)
+            throws IOException {
+        model.addAttribute("body", reader.readLine());
+        return "c008/readerRecv";
+    }
+}
+//}
+
+POSTデータ送信用のJSP、readerForm.jspです。
+
+//list[008-readerForm.jsp][readerForm.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="readerRecv" method="post">
+   名前: <input type="text" name="name" size="20"><br>
+   年齢: <input type="text" name="age" size="20"><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+リクエストボディ表示用のreaderRecv.jspです。
+
+//list[008-readerRecv.jsp][readerRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+nameの値は <c:out value="${name}" /><br>
+ageの値は <c:out value="${age}" /><br>
+bodyの値は <c:out value="${body}" /><br>
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[008-C008ControllerTest.java][C008ControllerTest.java]{
+package com.example.spring.controller.c008;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C008ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void readerFormのGET() throws Exception {
+        mockMvc.perform(get("/c008/readerForm")).andExpect(status().isOk())
+                .andExpect(view().name("c008/readerForm"));
+    }
+
+    @Test
+    public void readerRecvのPOST() throws Exception {
+        mockMvc.perform(post("/c008/readerRecv").content("name=test&age=33"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c008/readerRecv"))
+                .andExpect(model().attributeExists("body"))
+                .andExpect(model().attribute("body", is("name=test&age=33")))
+                .andExpect(model().attributeDoesNotExist("name", "age"));
+    }
+}
+//}
 
