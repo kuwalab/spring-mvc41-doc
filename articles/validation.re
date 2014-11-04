@@ -2,7 +2,7 @@
 
 == 型チェック
 
-==={011} 受け取る方のチェック
+==={011} 受け取る型のチェック
 
 @<b>{タグ【011】}
 
@@ -232,6 +232,381 @@ public class C011ControllerTest {
                 is(instanceOf(DefaultMessageSourceResolvable.class)));
         DefaultMessageSourceResolvable dmr = (DefaultMessageSourceResolvable) args[0];
         assertThat(dmr.getCode(), is("price"));
+    }
+}
+//}
+
+== JSR349によるvalidation
+
+==={012} Validatorでnullチェック
+
+@<b>{タグ【012】}
+
+Springは標準でBean Validationをサポートしており、Spring 4.0からはJSR-349のBean Validation 1.1をサポートしています。今回はSpringでBean Validationを使うための設定と、nullチェックのサンプルを紹介します。
+
+まず、MavenでBean Validation関連のライブラリーを追加します。
+
+//list[012-pom.xml][pom.xml]{
+<dependency>
+ <groupId>javax.el</groupId>
+ <artifactId>javax.el-api</artifactId>
+ <version>3.0.0</version>
+ <scope>provided</scope>
+</dependency>
+<dependency>
+ <groupId>javax.validation</groupId>
+ <artifactId>validation-api</artifactId>
+ <version>1.1.0.Final</version>
+</dependency>
+<dependency>
+ <groupId>org.hibernate</groupId>
+ <artifactId>hibernate-validator</artifactId>
+ <version>5.1.1.Final</version>
+</dependency>
+//}
+
+Bean Validation 1.1本体と、参照実装のHibernate 5.1、また、Bean Validation 1.1からは内部でEL 3.0を使用するためELのライブラリーを追加しています。
+
+ついでSpring MVCの設定のWEB-INF/spring/spring-context.xmlを編集します。それなりの量が変わるため全体を再掲しています。
+
+//list[012-spring-context.xml][spring-context.xml]{
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns:context="http://www.springframework.org/schema/context"
+ xmlns:mvc="http://www.springframework.org/schema/mvc"
+ xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-4.1.xsd
+http://www.springframework.org/schema/mvc
+http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd">
+ <mvc:annotation-driven validator="validator" />
+ <context:component-scan base-package="com.example.spring">
+  <context:exclude-filter type="regex"
+   expression="com\.example\.spring\.controller\..*Test" />
+ </context:component-scan>
+ <bean
+  class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+  <property name="prefix" value="/WEB-INF/jsp/" />
+  <property name="suffix" value=".jsp" />
+ </bean>
+ <bean id="messageSource"
+  class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+  <property name="basename" value="classpath:/messages" />
+ </bean>
+ <bean id="validator"
+  class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+  <property name="validationMessageSource" ref="messageSource" />
+ </bean>
+</beans>
+//}
+
+messageSourceを定義し、そのソースをvalidatorに関連付けます。そのvalidatorを<mvc:annotation-driven>のvalidator属性に設定し、Validatorの設定は完了となります。
+
+メッセージリソースは、Hibernateに付属のプロパティファイルをそのまま利用します。
+
+//list[012-messages.properties][messages.properties]{
+javax.validation.constraints.AssertFalse.message = must be false
+javax.validation.constraints.AssertTrue.message = must be true
+javax.validation.constraints.DecimalMax.message =
+    must be less than ${inclusive == true ? 'or equal to ' : ''}{value}
+javax.validation.constraints.DecimalMin.message =
+    must be greater than ${inclusive == true ? 'or equal to ' : ''}{value}
+javax.validation.constraints.Digits.message =
+    numeric value out of bounds (<{integer} digits>.<{fraction} digits> expected)
+javax.validation.constraints.Future.message = must be in the future
+javax.validation.constraints.Max.message = must be less than or equal to {value}
+javax.validation.constraints.Min.message = must be greater than or equal to {value}
+javax.validation.constraints.NotNull.message = may not be null
+javax.validation.constraints.Null.message = must be null
+javax.validation.constraints.Past.message = must be in the past
+javax.validation.constraints.Pattern.message = must match "{regexp}"
+javax.validation.constraints.Size.message = size must be between {min} and {max}
+
+org.hibernate.validator.constraints.CreditCardNumber.message =
+    invalid credit card number
+org.hibernate.validator.constraints.EAN.message = invalid {type} barcode
+org.hibernate.validator.constraints.Email.message =
+    not a well-formed email address
+org.hibernate.validator.constraints.Length.message =
+    length must be between {min} and {max}
+org.hibernate.validator.constraints.LuhnCheck.message =
+    The check digit for ${value} is invalid, Luhn Modulo 10 checksum failed
+org.hibernate.validator.constraints.Mod10Check.message =
+    The check digit for ${value} is invalid, Modulo 10 checksum failed
+org.hibernate.validator.constraints.Mod11Check.message =
+    The check digit for ${value} is invalid, Modulo 11 checksum failed
+org.hibernate.validator.constraints.ModCheck.message =
+    The check digit for ${value} is invalid, ${modType} checksum failed
+org.hibernate.validator.constraints.NotBlank.message = may not be empty
+org.hibernate.validator.constraints.NotEmpty.message = may not be empty
+org.hibernate.validator.constraints.ParametersScriptAssert.message =
+    script expression "{script}" didn't evaluate to true
+org.hibernate.validator.constraints.Range.message = must be between {min} and {max}
+org.hibernate.validator.constraints.SafeHtml.message = may have unsafe html content
+org.hibernate.validator.constraints.ScriptAssert.message =
+    script expression "{script}" didn't evaluate to true
+org.hibernate.validator.constraints.URL.message = must be a valid URL
+
+org.hibernate.validator.constraints.br.CNPJ.message =
+    invalid Brazilian corporate taxpayer registry number (CNPJ)
+org.hibernate.validator.constraints.br.CPF.message =
+    invalid Brazilian individual taxpayer registry number (CPF)
+org.hibernate.validator.constraints.br.TituloEleitoral.message =
+    invalid Brazilian Voter ID card number
+//}
+
+このままだと英語だけなので、必要な物から日本語にしていきます。日本語のメッセージリソースは、messages_ja.propertiesというファイル名にして以下の内容にしておきます。
+
+//list[012-mesages.properties][messages.properties]{
+javax.validation.constraints.NotNull.message = 入力は必須です
+
+typeMismatch.java.lang.Integer={0}は整数で入力してください。
+price=価格
+//}
+
+次にvalidatorを動作させるためのControllerを作成します。
+
+//list[012-C012Controller.java][C012Controller.java]{
+package com.example.spring.controller.c012;
+
+import javax.validation.Valid;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+@RequestMapping("/c012")
+public class C012Controller {
+    @RequestMapping("/bookForm")
+    public String bookForm() {
+        return "c012/bookForm";
+    }
+
+    @RequestMapping(value = "/bookRecv", method = RequestMethod.POST)
+    public String bookRecv(@Valid @ModelAttribute C012Model c012Model,
+            BindingResult errors) {
+        if (errors.hasErrors()) {
+            return "c012/bookForm";
+        }
+        return "c012/bookRecv";
+    }
+}
+//}
+
+コントローラで重要なのは、データを受信するbookRecvメソッドになります。bookRecvメソッドではデータを受け取るBookクラスに@Validアノテーションがついています。@Validアノテーションを付けることでBean Validationが動作するようになります。また、Bean Validationの検証結果は、次の引数のBindingResultの中に格納されます。
+
+メソッドの中で、BindingResult#hasErrorsメソッドでエラーが有るか確認し、エラーがある場合には入力画面に戻るようにしています。
+
+次に、C012Modelクラスの定義を確認します。
+
+//list[012-C012Model.java][C012Model.java]{
+package com.example.spring.controller.c012;
+
+import javax.validation.constraints.NotNull;
+
+public class C012Model {
+    @NotNull
+    private String name;
+    @NotNull
+    private Integer price;
+
+    // setter、getterは省略
+}
+//}
+
+C012Modelクラスの各フィールドには@NotNullアノテーションを付けています。このアノテーションを付けることで@Validの付いたコントローラで自動的にValidationが行われます。@NotNullアノテーションをつけているとフィールドがnullの場合に検証エラーとなります。
+
+次にJSPを確認していきます。まずデータ送信をするためのフォームの画面（bookForm.jsp）です。
+
+//list[012-bookForm.jsp][bookForm.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="bookRecv" method="post">
+   書名: <input type="text" name="name" size="20">
+    <form:errors path="c012Model.name" /><br>
+   価格: <input type="text" name="price" size="20">
+    <form:errors path="c012Model.price" /><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+入力画面では、入力フォームの後ろにエラー表示のカスタムタグをつけています。pathにはモデルオブジェクト（c012Model）のフィールド名を指定します。こうすることで、そのフィールドで発生したエラーがカスタムタグの場所に表示されます。
+
+入力された結果の確認用のJSP（bookRecv.jsp）です。
+
+//list[012-bookRecv.jsp][bookRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+c012Model.nameの値は <c:out value="${c012Model.name}" /><br>
+c012Model.priceの値は <c:out value="${c012Model.price}" /><br>
+ </body>
+</html>
+//}
+
+ここまでで実際にエラーを検証できる環境が整いましたので、実際にエラーを発生させてみます。フォームに何も入力せずに送信ボタンを押すと価格のみエラーとなります。これは、受け取るフィールドの型の違いのために起こります。書名はString型のためフォームから送られてくる空文字列（""）を受け取るためnullにはなりません。対してpriceは空文字列はInteger型のため空文字列は受け取れずnullになります。そのため、priceのみ@NotNullでエラーとなります。
+
+空文字のチェックのためにはBean Validation標準のアノテーションではなく、HibernateのValiationを使うとできます。この辺りは次回以降に解説していきます。
+
+確認用のテストケースは次のとおりです。
+
+//list[012-C012ControllerTest.java][C012ControllerTest.java]{
+package com.example.spring.controller.c012;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.ModelAndView;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C012ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void bookFormへのGET() throws Exception {
+        mockMvc.perform(get("/c012/bookForm")).andExpect(status().isOk())
+                .andExpect(view().name("c012/bookForm"))
+                .andExpect(model().hasNoErrors());
+    }
+
+    @Test
+    public void bookRecvへのPOST_NOT_NULL() throws Exception {
+        mockMvc.perform(
+                post("/c012/bookRecv").param("name", "よくわかるSpring").param(
+                        "price", "1000")).andExpect(status().isOk())
+                .andExpect(view().name("c012/bookRecv"))
+                .andExpect(model().hasNoErrors());
+    }
+
+    @Test
+    public void bookRecvへのPOST_nameがnull() throws Exception {
+        MvcResult mvcResult = mockMvc
+                .perform(post("/c012/bookRecv").param("price", "1000"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c012/bookForm"))
+                .andExpect(model().hasErrors())
+                .andExpect(model().errorCount(1))
+                .andExpect(model().attributeHasFieldErrors("c012Model", "name"))
+                .andExpect(model().attributeExists("c012Model")).andReturn();
+
+        // パラメータのチェック
+        ModelAndView mav = mvcResult.getModelAndView();
+        Map<String, Object> model = mav.getModel();
+        Object c012ModelObject = model.get("c012Model");
+        assertThat(c012ModelObject, is(notNullValue()));
+        assertThat(c012ModelObject, is(instanceOf(C012Model.class)));
+        C012Model c012Model = (C012Model) c012ModelObject;
+        assertThat(c012Model.getName(), is(nullValue()));
+
+        // エラーメッセージのチェック
+        Object object = mav.getModel().get(
+                "org.springframework.validation.BindingResult.c012Model");
+        assertThat(object, is(not(nullValue())));
+        assertThat(object, is(instanceOf(BindingResult.class)));
+        BindingResult bindingResult = (BindingResult) object;
+
+        checkField(bindingResult, "name", "NotNull");
+    }
+
+    @Test
+    public void bookRecvへのPOST_nameとpriceがnull() throws Exception {
+        MvcResult mvcResult = mockMvc
+                .perform(post("/c012/bookRecv"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c012/bookForm"))
+                .andExpect(model().hasErrors())
+                .andExpect(model().errorCount(2))
+                .andExpect(model().attributeHasFieldErrors("c012Model", "name"))
+                .andExpect(
+                        model().attributeHasFieldErrors("c012Model", "price"))
+                .andExpect(model().attributeExists("c012Model")).andReturn();
+
+        // パラメータのチェック
+        ModelAndView mav = mvcResult.getModelAndView();
+        Map<String, Object> model = mav.getModel();
+        Object c012ModelObject = model.get("c012Model");
+        assertThat(c012ModelObject, is(notNullValue()));
+        assertThat(c012ModelObject, is(instanceOf(C012Model.class)));
+        C012Model c012Model = (C012Model) c012ModelObject;
+        assertThat(c012Model.getName(), is(nullValue()));
+
+        // エラーメッセージのチェック
+        Object object = mav.getModel().get(
+                "org.springframework.validation.BindingResult.c012Model");
+        assertThat(object, is(not(nullValue())));
+        assertThat(object, is(instanceOf(BindingResult.class)));
+        BindingResult bindingResult = (BindingResult) object;
+
+        checkField(bindingResult, "name", "NotNull");
+        checkField(bindingResult, "price", "NotNull");
+    }
+
+    private void checkField(BindingResult bindingResult, String fieldName,
+            String errorCode) {
+        // エラーのあるフィールドの取得
+        List<FieldError> list = bindingResult.getFieldErrors(fieldName);
+        assertThat(list, is(not(nullValue())));
+        assertThat(list.size(), is(1));
+
+        // 詳細なエラーチェック
+        FieldError fieldError = list.get(0);
+        assertThat(fieldError.getCode(), is(errorCode));
+
+        // エラーメッセージのパラメータ
+        Object[] args = fieldError.getArguments();
+        assertThat(args.length, is(1));
+        assertThat(args[0],
+                is(instanceOf(DefaultMessageSourceResolvable.class)));
+        DefaultMessageSourceResolvable dmr = (DefaultMessageSourceResolvable) args[0];
+        assertThat(dmr.getCode(), is(fieldName));
     }
 }
 //}
