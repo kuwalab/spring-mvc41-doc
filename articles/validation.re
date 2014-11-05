@@ -2313,5 +2313,67 @@ public class C019ControllerTest {
 }
 //}
 
+==={020} Validatorのエラーの際に入力値を再表示させる
+
+@<b>{タグ【020】}
+
+前回のソースを少し変更して、フォームの値の再表示をします。
+
+まずはControllerです。
+
+//list[020-C020Controller.java][C020Controller.java]{
+package com.example.spring.controller.c020;
+
+import javax.validation.Valid;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+@RequestMapping("/c020")
+public class C020Controller {
+    @RequestMapping("/bookForm")
+    public String bookForm(Model model) {
+        model.addAttribute("c020Model", new C020Model());
+        return "c020/bookForm";
+    }
+
+    @RequestMapping(value = "/bookRecv", method = RequestMethod.POST)
+    public String bookRecv(@Valid @ModelAttribute C020Model c020Model,
+            BindingResult errors) {
+        if (errors.hasErrors()) {
+            return "c020/bookForm";
+        }
+        return "c020/bookRecv";
+    }
+}
+//}
+
+<form:input>タグを使ってpathにエラーメッセージと同じようにモデル名.フィールド名を指定することで、リクエストから自動的に値が割り当てられます。
+
+//list[020-bookForm.jsp][bookForm.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="bookRecv" method="post">
+   書名: <form:input path="c020Model.name" size="20" /><form:errors path="c020Model.name" /><br>
+   価格: <form:input path="c020Model.price" size="20" /><form:errors path="c020Model.price" /><form:errors path="c020Model.validPrice" /><br>
+   定価: <form:input path="c020Model.listPrice" size="20" /><form:errors path="c020Model.listPrice" /><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+bookRecv.jspとC020Modelは同様のため省略します。
 
 
