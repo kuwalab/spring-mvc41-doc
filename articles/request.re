@@ -1145,3 +1145,160 @@ public class C010ControllerTest {
 }
 //}
 
+== 分岐
+
+==={021} submitボタンによって分岐する
+
+@<b>{タグ【021】}
+
+formの中にsubmitボタンが複数ある場合に、どのボタンが押されたかはリクエストに含まれるパラメータでわかります。具体的にはbutton1というname属性のボタンを押した時には、button1パラメータが送信されます。それを利用して、同じURLに対してパラメータの有無によって分岐することができます。
+
+@RequestMappingのparams属性で、任意のパラメータが送信されている場合にそのメソッドが使用されます。
+
+//list[021-C021Controller.java][C021Controller.java]{
+package com.example.spring.controller.c021;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+public class C021Controller {
+    @RequestMapping("/c021/branchForm")
+    public String branchForm() {
+        return "c021/branchForm";
+    }
+
+    @RequestMapping(value = "/c021/branchRecv", params = "branch1",
+        method = RequestMethod.POST)
+    public String branch1() {
+        return "c021/branch1";
+    }
+
+    @RequestMapping(value = "/c021/branchRecv", params = "branch2",
+        method = RequestMethod.POST)
+    public String branch2() {
+        return "c021/branch2";
+    }
+
+    @RequestMapping(value = "/c021/branchRecv", params = "branch3",
+        method = RequestMethod.POST)
+    public String branch3() {
+        return "c021/branch3";
+    }
+
+    @RequestMapping(value = "/c021/branchRecv", params = "branch4",
+        method = RequestMethod.POST)
+    public String branch4() {
+        return "c021/branch4";
+    }
+}
+//}
+
+submitが送信されるボタンを4つ用意して、それぞれname属性をbranch1〜branch4にしています。
+
+//list[021-branchForm.jsp][branchForm.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="branchRecv" method="post">
+   <input type="submit" name="branch1" value="送信1">
+   <input type="submit" name="branch2" value="送信2">
+   <button name="branch3">送信3</button>
+   <button name="branch4">送信4</button>
+  </form>
+ </body>
+</html>
+//}
+
+branch1〜4は中の確認用の文字列が異なるだけなので、branch1.jspだけ確認します。
+
+//list[021-branch1.jsp][branch1.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+branch1
+ </body>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[021-C021ControllerTest.java][C021ControllerTest.java]{
+package com.example.spring.controller.c021;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C021ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void branchFormのGET() throws Exception {
+        mockMvc.perform(get("/c021/branchForm")).andExpect(status().isOk())
+                .andExpect(view().name("c021/branchForm"));
+    }
+
+    @Test
+    public void branch1のPOST() throws Exception {
+        mockMvc.perform(post("/c021/branchRecv").param("branch1", ""))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c021/branch1"));
+    }
+
+    @Test
+    public void branch2のPOST() throws Exception {
+        mockMvc.perform(post("/c021/branchRecv").param("branch2", ""))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c021/branch2"));
+    }
+
+    @Test
+    public void branch3のPOST() throws Exception {
+        mockMvc.perform(post("/c021/branchRecv").param("branch3", ""))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c021/branch3"));
+    }
+
+    @Test
+    public void branch4のPOST() throws Exception {
+        mockMvc.perform(post("/c021/branchRecv").param("branch4", ""))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c021/branch4"));
+    }
+}
+//}
+
+
