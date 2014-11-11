@@ -1495,3 +1495,104 @@ public class C025ControllerTest {
 }
 //}
 
+== いろいろなスコープ
+
+==={027} リクエストスコープにデータを格納
+
+@<b>{タグ【027】}
+
+リクエストスコープにデータを格納する方法を紹介します。Springではいくつかの方法でリクエストスコープにデータを格納できます。ひとつは通常のサーブレットと同様にHttpServletRequestを使う方法。2つ目がWebRequestを使う方法。3つ目がModelを使う方法になります。
+
+//list[027-C027Controller.java][C027Controller.java]{
+package com.example.spring.controller.c027;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.context.request.WebRequest;
+
+@Controller
+public class C027Controller {
+    @RequestMapping("/c027/requestScope")
+    public String requestScope(HttpServletRequest request,
+            WebRequest webRequest, Model model) {
+        request.setAttribute("req1", "httpServletRequest");
+        webRequest.setAttribute("req2", "webRequest", WebRequest.SCOPE_REQUEST);
+        model.addAttribute("req3", "model");
+        return "c027/requestScope";
+    }
+}
+//}
+
+WebRequestを使用する場合には、格納するスコープを3番目の引数に指定します。それ以外はHttpServletRequestと同様です。
+
+Modelオブジェクトを利用する場合は、メソッド名が違うだけでHttpServletRequestと同様です。
+
+使用するJSPでは、明示してrequestScopeから値を取得しています。
+
+//list[027-requestScope.jsp][requestScope.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+HttpServletRequest: <c:out value="${requestScope.req1}" /><br>
+WebRequest: <c:out value="${requestScope.req2}" /><br>
+Model: <c:out value="${requestScope.req3}" />
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[027-C027ControllerTest.java][C027ControllerTest.java]{
+package com.example.spring.controller.c027;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C027ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void requestScopeのGET() throws Exception {
+        mockMvc.perform(get("/c027/requestScope"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c027/requestScope"))
+                .andExpect(
+                        request().attribute("req1", is("httpServletRequest")))
+                .andExpect(request().attribute("req2", is("webRequest")))
+                .andExpect(model().attribute("req3", is("model")));
+    }
+}
+//}
+
