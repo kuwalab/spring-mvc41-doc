@@ -1761,3 +1761,134 @@ public class C028ControllerTest {
 }
 //}
 
+==={029} セッションスコープにデータを格納
+
+@<b>{タグ【029】}
+
+セッションにデータを格納する方法もリクエスト同様に複数あります。Servlet APIのHttpSessionを使用する方法、WebRequestを使用する方法などです。
+
+WebRequestはリクエストスコープと同様にデータを格納する際にスコープを指定します。
+
+今回は同一の画面に遷移する3つのメソッドを用意しています。最初のものはセッションにデータを格納するもの、2番目は何もしないもの、3番目はセッションをクリアするものになります。
+
+//list[029-C029Controller.java][C029Controller.java]{
+package com.example.spring.controller.c029;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.context.request.WebRequest;
+
+@Controller
+public class C029Controller {
+    @RequestMapping("/c029/sessionScope1")
+    public String sessionScope1(HttpSession session, WebRequest webRequest) {
+        session.setAttribute("session1", "httpSession");
+        webRequest.setAttribute("session2", "webRequest",
+                WebRequest.SCOPE_SESSION);
+
+        return "c029/sessionScope";
+    }
+
+    @RequestMapping("/c029/sessionScope2")
+    public String sessionScope2() {
+        return "c029/sessionScope";
+    }
+
+    @RequestMapping("/c029/sessionScope3")
+    public String sessionScope3(HttpSession session) {
+        session.invalidate();
+        return "c029/sessionScope";
+    }
+}
+//}
+
+表示用のsessionScope.jspです。
+
+//list[029-sessionScope.jsp][sessionScope.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+HttpSession: <c:out value="${sessionScope.session1}" /><br>
+WebRequest: <c:out value="${sessionScope.session2}" /><br>
+<a href="sessionScope2">セッションをクリアせず再表示</a><br>
+<a href="sessionScope3">セッションをクリアして再表示</a>
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[029-C029ControllerTest.java][C029ControllerTest.java]{
+package com.example.spring.controller.c029;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import java.util.UUID;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C029ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+    private MockHttpSession mockHttpSession;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+        mockHttpSession = new MockHttpSession(wac.getServletContext(), UUID
+                .randomUUID().toString());
+    }
+
+    @Test
+    public void requestScopeのGET() throws Exception {
+        assertThat(mockHttpSession.getAttribute("session1"), is(nullValue()));
+        assertThat(mockHttpSession.getAttribute("session2"), is(nullValue()));
+
+        mockMvc.perform(get("/c029/sessionScope1").session(mockHttpSession))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c029/sessionScope"));
+        assertThat(mockHttpSession.getAttribute("session1"), is("httpSession"));
+        assertThat(mockHttpSession.getAttribute("session2"), is("webRequest"));
+
+        // セッションは維持される
+        mockMvc.perform(get("/c029/sessionScope2").session(mockHttpSession))
+                .andExpect(view().name("c029/sessionScope"));
+
+        assertThat(mockHttpSession.getAttribute("session1"), is("httpSession"));
+        assertThat(mockHttpSession.getAttribute("session2"), is("webRequest"));
+
+        // セッションは破棄される
+        mockMvc.perform(get("/c029/sessionScope3").session(mockHttpSession))
+                .andExpect(view().name("c029/sessionScope"));
+
+        assertThat(mockHttpSession.isInvalid(), is(true));
+    }
+}
+//}
+
