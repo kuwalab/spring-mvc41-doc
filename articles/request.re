@@ -1892,3 +1892,96 @@ public class C029ControllerTest {
 }
 //}
 
+==={031} Flashスコープにデータを格納
+
+@<b>{タグ【031】}
+
+Springではリダイレクト時にリダイレクト先で参照できるRedirectAttributeを使用できます。
+
+//list[031-C31Controller.java][C031Controller.java]{
+package com.example.spring.controller.c031;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+public class C031Controller {
+    @RequestMapping("/c031/flashScope1")
+    public String flashScope1(RedirectAttributes attrs, Model model) {
+        attrs.addFlashAttribute("flash1", "flash1");
+        model.addAttribute("request1", "request1");
+
+        return "redirect:/c031/flashScope2";
+    }
+
+    @RequestMapping("/c031/flashScope2")
+    public String flashScope2() {
+        return "c031/flashScope";
+    }
+}
+//}
+
+表示用のflashScope1.jspは以下のようになります。
+
+//list[031-flashScope.jsp][flashScope.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+flash1: <c:out value="${flash1}" /><br>
+request1: <c:out value="${request1}" />
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[031-C031ControllerTest.java][C031ControllerTest.java]{
+package com.example.spring.controller.c031;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C031ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void requestScopeのGET() throws Exception {
+        mockMvc.perform(get("/c031/flashScope1")).andExpect(status().isFound())
+                .andExpect(redirectedUrl("/c031/flashScope2"))
+                .andExpect(flash().attribute("flash1", "flash1"))
+                .andExpect(request().attribute("request1", is(nullValue())));
+    }
+}
+//}
+
