@@ -389,24 +389,24 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RequestMapping("/c005")
 public class C005Controller {
     @RequestMapping(value = "/pathVar1/{foo}/{bar}", method = RequestMethod.GET)
-    public String pathVar3(@PathVariable String foo, @PathVariable String bar) {
+    public String pathVar1(@PathVariable String foo, @PathVariable String bar) {
         return "c005/pathVar";
     }
 
     @RequestMapping(value = "/pathVar2/{bar1}/{foo1}", method = RequestMethod.GET)
-    public String pathVar4(@PathVariable("bar1") String bar,
+    public String pathVar2(@PathVariable("bar1") String bar,
             @PathVariable("foo1") String foo) {
         return "c005/pathVar";
     }
 
     @RequestMapping(value = "/pathVar3/{foo}/param/{bar}", method = RequestMethod.GET)
-    public String pathVar5(@PathVariable String foo, @PathVariable String bar) {
+    public String pathVar3(@PathVariable String foo, @PathVariable String bar) {
         return "c005/pathVar";
     }
 }
 //}
 
-2つ目のurlpara4メソッドではパラメータの順番と受け取るメソッドの引数の順番を変えています。3つ目のurlparam5メソッドでは、fooパラメータとbarパラメータの間にリテラルのパスを含んでいます。
+2つ目のpathVar2メソッドではパラメータの順番と受け取るメソッドの引数の順番を変えています。3つ目のpathVar3メソッドでは、fooパラメータとbarパラメータの間にリテラルのパスを含んでいます。
 
 このように、柔軟にパラメータの設定ができます。
 
