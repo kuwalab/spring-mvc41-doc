@@ -1872,10 +1872,9 @@ Bean Validationの標準ではなく、Hibernateの実装に含んでいるValid
 //list[018-C018Controller.java][C018Controller.java]{
 package com.example.spring.controller.c018;
 
-import javax.validation.Valid;
-
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -1889,7 +1888,7 @@ public class C018Controller {
     }
 
     @RequestMapping(value = "/bookRecv", method = RequestMethod.POST)
-    public String bookRecv(@Valid @ModelAttribute C018Model c018Model,
+    public String bookRecv(@Validated @ModelAttribute C018Model c018Model,
             BindingResult errors) {
         if (errors.hasErrors()) {
             return "c018/bookForm";
