@@ -1303,7 +1303,7 @@ public class C021ControllerTest {
 
 == ファイルのアップロード
 
-==={025} Servlet 3.0によるファイルのアップロード
+==={025} servlet 3.0によるファイルのアップロード
 
 @<b>{タグ【025】}
 
@@ -1493,6 +1493,139 @@ public class C025ControllerTest {
         Files.delete(actualFile);
     }
 }
+//}
+
+==={026} ファイルアップロードの例外処理
+
+@<b>{タグ【026】}
+
+ファイルアップロード時の例外（アップロードサイズが大きすぎる等）処理はやや煩雑です。また、ファイルアップロード時の上限ファイルサイズをきちんと決めておかないと、サーバーのリソースを食いつぶす原因にもなります。
+
+まず、アップロード時の上限サイズをweb.xmlに記載します。
+
+//list[026-web.xml_1][web.xml]{
+<multipart-config>
+ <location>/tmp</location>
+ <max-file-size>1000000</max-file-size>
+ <max-request-size>1100000</max-request-size>
+ <file-size-threshold>0</file-size-threshold>
+</multipart-config>
+//}
+
+この例ではは約1MBを上限としています。
+
+また、正常に例外処理をするためにMultipartFilterを設定します。
+
+//list[026-web.xml_2][web.xml]{
+<filter>
+ <filter-name>MultipartFilter</filter-name>
+ <filter-class>org.springframework.web.multipart.support.MultipartFilter</filter-class>
+</filter>
+<filter-mapping>
+ <filter-name>MultipartFilter</filter-name>
+ <url-pattern>/*</url-pattern>
+</filter-mapping>
+//}
+
+この設定でファイルのアップロードのコントローラーを次のように作成します。
+
+//list[026-C026Controller.java][C026Controller.java]{
+package com.example.spring.controller.c026;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+@Controller
+@RequestMapping("/c026")
+public class C026Controller {
+    @RequestMapping("/uploadForm")
+    public String uploadForm(Model model) {
+        System.out.println("#########");
+        return "c026/uploadForm";
+    }
+
+    @RequestMapping(value = "/uploadRecv", method = RequestMethod.POST)
+    public String uploadRecv(@RequestParam String test,
+            @RequestParam MultipartFile file, Model model) throws IOException {
+        model.addAttribute("test", test);
+        Path path = Paths.get(System.getProperty("java.io.tmpdir"),
+                file.getOriginalFilename());
+        file.transferTo(path.toFile());
+        model.addAttribute("fileName", path);
+
+        return "c026/uploadRecv";
+    }
+
+    @RequestMapping(value = "/error")
+    public String error(HttpServletRequest request, Model model) {
+        String uploadUrl = request.getParameter("uploadUrl");
+        model.addAttribute("errorMessage", "ファイルサイズが大きすぎます");
+        return "forward:" + uploadUrl;
+    }
+}
+//}
+
+今回は、エラーのハンドリング用のerrorメソッドを用意しています。ファイルアップロードの例外が発生した際にこのメソッドが呼ばれるように設定します。errorメソッドでは遷移先のURLをリクエストから取得し、そこにフォワードしつつ、エラーメッセージをセットしています。
+
+アップロードするためのuploadForm.jspは次のとおりです。
+
+//list[026-uploadForm.jsp][uploadForm.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <c:out value="${errorMessage}" /><br>
+  <form action="uploadRecv?uploadUrl=/c026/uploadForm" method="post"
+   enctype="multipart/form-data">
+   <input type="text" name="test"><br>
+   <input type="file" name="file"><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+エラーメッセージの表示と、formのaction属性にアップロード処理のエラー発生時の遷移先URLを付加しています。
+
+アップロードが正常に終了した際の表示用のuploadRecv.jspは次のとおりです。
+
+//list[026-uploadRecv.jsp][uploadRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+アップロードされました。<br>
+ファイル名は<c:out value="${fileName}" /><br>
+送信されたtestパラメータは<c:out value="${test}" />
+ </body>
+</html>
+//}
+
+Springでファイルアップロードの上限サイズを超えた場合には、org.springframework.web.multipart.MultipartExceptionが発生します。web.xmlでこの例外をハンドリングして、先に作成した/c026/errorに遷移します。
+
+//list[026-web.xml_3][web.xml]{
+<error-page>
+ <exception-type>org.springframework.web.multipart.MultipartException</exception-type>
+ <location>/c026/error</location>
+</error-page>
 //}
 
 == いろいろなスコープ
