@@ -1729,174 +1729,9 @@ public class C027ControllerTest {
 }
 //}
 
-==={028} Beanをリクエストスコープに格納する
+==={028} セッションスコープにデータを格納
 
 @<b>{タグ【028】}
-
-Springのコンポーネントのスコープをシングルトンからリクエストにすることでもリクエストスコープにデータを格納できます。
-
-まず、リクエストに格納するコンポーネントを作成します。@Scopeアノテーションでスコープをrequestにします。
-
-//list[028-C028Model.java][C028Model.java]{
-package com.example.spring.controller.c028;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.WebApplicationContext;
-
-@Scope(WebApplicationContext.SCOPE_REQUEST)
-@Component
-public class C028Model {
-    private String name;
-    private Integer price;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Integer getPrice() {
-        return price;
-    }
-
-    public void setPrice(Integer price) {
-        this.price = price;
-    }
-}
-//}
-
-メソッドの引数にC028Modelを指定してそれを利用します。
-
-//list[028-C028Controller.java][C028Controller.java]{
-package com.example.spring.controller.c028;
-
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-@Controller
-public class C028Controller {
-    @RequestMapping("/c028/requestScope1")
-    public String requestScope1(C028Model c028Model) {
-        c028Model.setName("よくわかるSpring");
-        c028Model.setPrice(2900);
-        return "c028/requestScope1";
-    }
-
-    @RequestMapping("/c028/requestScope2")
-    public String requestScope2() {
-        return "c028/requestScope2";
-    }
-}
-//}
-
-表示するrequestScope1.jspです。こちらはリクエストスコープにデータがある状態で表示します。
-
-//list[028-requestScope1.jsp][requestScope1.jsp]{
-<%@page contentType="text/html; charset=utf-8" %><%--
---%><!DOCTYPE html>
-<html>
- <head>
-  <meta charset="utf-8">
-  <title>サンプル</title>
- </head>
- <body>
-書名: <c:out value="${requestScope.c028Model.name}" /><br>
-価格: <c:out value="${requestScope.c028Model.price}" /><br>
-<a href="requestScope2">画面遷移</a>
- </body>
-</html>
-//}
-
-requestScope1.jspから遷移するrequestScope2.jspです。こちらはリクエストスコープに何も格納されない（スコープの有効期限が切れた状態）ことの確認になります。
-
-//list[028-requestScope2.jsp][requestScope2.jsp]{
-<%@page contentType="text/html; charset=utf-8" %><%--
---%><!DOCTYPE html>
-<html>
- <head>
-  <meta charset="utf-8">
-  <title>サンプル</title>
- </head>
- <body>
-書名: <c:out value="${requestScope.c028Model.name}" /><br>
-価格: <c:out value="${requestScope.c028Model.price}" />
- </body>
-</html>
-//}
-
-確認用のテストケースは次のとおりです。
-
-//list[028-C028ControllerTest.java][C028ControllerTest.java]{
-package com.example.spring.controller.c028;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.web.context.WebApplicationContext;
-
-@RunWith(SpringJUnit4ClassRunner.class)
-@WebAppConfiguration
-@ContextConfiguration(locations = {
-    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
-public class C028ControllerTest {
-    @Autowired
-    private WebApplicationContext wac;
-
-    private MockMvc mockMvc;
-
-    @Before
-    public void setup() {
-        mockMvc = webAppContextSetup(wac).build();
-    }
-
-    @Test
-    public void requestScope1のGET() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(get("/c028/requestScope1"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("c028/requestScope1"))
-                .andExpect(request().attribute("c028Model", is(notNullValue())))
-                .andReturn();
-        HttpServletRequest request = mvcResult.getRequest();
-        C028Model c028Model = (C028Model) request.getAttribute("c028Model");
-        assertThat(c028Model.getName(), is("よくわかるSpring"));
-        assertThat(c028Model.getPrice(), is(2900));
-    }
-
-    @Test
-    public void requestScope2のGET() throws Exception {
-        mockMvc.perform(get("/c028/requestScope1"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("c028/requestScope1"))
-                .andExpect(request().attribute("c028Model", is(notNullValue())));
-        mockMvc.perform(get("/c028/requestScope2")).andExpect(status().isOk())
-                .andExpect(view().name("c028/requestScope2"))
-                .andExpect(request().attribute("c028Model", is(nullValue())));
-
-    }
-}
-//}
-
-==={029} セッションスコープにデータを格納
-
-@<b>{タグ【029】}
 
 セッションにデータを格納する方法もリクエスト同様に複数あります。Servlet APIのHttpSessionを使用する方法、WebRequestを使用する方法などです。
 
@@ -1904,8 +1739,8 @@ WebRequestはリクエストスコープと同様にデータを格納する際�
 
 今回は同一の画面に遷移する3つのメソッドを用意しています。最初のものはセッションにデータを格納するもの、2番目は何もしないもの、3番目はセッションをクリアするものになります。
 
-//list[029-C029Controller.java][C029Controller.java]{
-package com.example.spring.controller.c029;
+//list[028-C028Controller.java][C028Controller.java]{
+package com.example.spring.controller.c028;
 
 import javax.servlet.http.HttpSession;
 
@@ -1914,32 +1749,33 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.WebRequest;
 
 @Controller
-public class C029Controller {
-    @RequestMapping("/c029/sessionScope1")
+@RequestMapping("/c028")
+public class C028Controller {
+    @RequestMapping("/sessionStart")
     public String sessionScope1(HttpSession session, WebRequest webRequest) {
         session.setAttribute("session1", "httpSession");
         webRequest.setAttribute("session2", "webRequest",
                 WebRequest.SCOPE_SESSION);
 
-        return "c029/sessionScope";
+        return "c028/sessionScope";
     }
 
-    @RequestMapping("/c029/sessionScope2")
+    @RequestMapping("/sessionScope")
     public String sessionScope2() {
-        return "c029/sessionScope";
+        return "c028/sessionScope";
     }
 
-    @RequestMapping("/c029/sessionScope3")
+    @RequestMapping("/sessionClear")
     public String sessionScope3(HttpSession session) {
         session.invalidate();
-        return "c029/sessionScope";
+        return "c028/sessionScope";
     }
 }
 //}
 
 表示用のsessionScope.jspです。
 
-//list[029-sessionScope.jsp][sessionScope.jsp]{
+//list[028-sessionScope.jsp][sessionScope.jsp]{
 <%@page contentType="text/html; charset=utf-8" %><%--
 --%><!DOCTYPE html>
 <html>
@@ -1950,18 +1786,18 @@ public class C029Controller {
  <body>
 HttpSession: <c:out value="${sessionScope.session1}" /><br>
 WebRequest: <c:out value="${sessionScope.session2}" /><br>
-<a href="sessionScope2">セッションをクリアせず再表示</a><br>
-<a href="sessionScope3">セッションをクリアして再表示</a>
+<a href="sessionScope">セッションをクリアせず再表示</a><br>
+<a href="sessionClear">セッションをクリアして再表示</a>
  </body>
 </html>
 //}
 
 確認用のテストケースは次のとおりです。
 
-//list[029-C029ControllerTest.java][C029ControllerTest.java]{
-package com.example.spring.controller.c029;
+//list[028-C029ControllerTest.java][C028ControllerTest.java]{
+package com.example.spring.controller.c028;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.corematchers.*;
 import static org.junit.Assert.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -1983,8 +1819,8 @@ import org.springframework.web.context.WebApplicationContext;
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
 @ContextConfiguration(locations = {
-    "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
-public class C029ControllerTest {
+ "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C028ControllerTest {
     @Autowired
     private WebApplicationContext wac;
 
@@ -2003,22 +1839,22 @@ public class C029ControllerTest {
         assertThat(mockHttpSession.getAttribute("session1"), is(nullValue()));
         assertThat(mockHttpSession.getAttribute("session2"), is(nullValue()));
 
-        mockMvc.perform(get("/c029/sessionScope1").session(mockHttpSession))
+        mockMvc.perform(get("/c028/sessionStart").session(mockHttpSession))
                 .andExpect(status().isOk())
-                .andExpect(view().name("c029/sessionScope"));
+                .andExpect(view().name("c028/sessionScope"));
         assertThat(mockHttpSession.getAttribute("session1"), is("httpSession"));
         assertThat(mockHttpSession.getAttribute("session2"), is("webRequest"));
 
         // セッションは維持される
-        mockMvc.perform(get("/c029/sessionScope2").session(mockHttpSession))
-                .andExpect(view().name("c029/sessionScope"));
+        mockMvc.perform(get("/c028/sessionScope").session(mockHttpSession))
+                .andExpect(view().name("c028/sessionScope"));
 
         assertThat(mockHttpSession.getAttribute("session1"), is("httpSession"));
         assertThat(mockHttpSession.getAttribute("session2"), is("webRequest"));
 
         // セッションは破棄される
-        mockMvc.perform(get("/c029/sessionScope3").session(mockHttpSession))
-                .andExpect(view().name("c029/sessionScope"));
+        mockMvc.perform(get("/c028/sessionClear").session(mockHttpSession))
+                .andExpect(view().name("c028/sessionScope"));
 
         assertThat(mockHttpSession.isInvalid(), is(true));
     }
