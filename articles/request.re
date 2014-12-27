@@ -1861,6 +1861,162 @@ public class C028ControllerTest {
 }
 //}
 
+==={029} コンポーネントをセッションスコープにする
+
+@<b>{タグ【029】}
+
+SpringのコンポーネントをデフォルトのシングルトンからSessionに変更して、リクエストをまたいでコンポーネントを利用することができます。
+
+まず、Sessionに置くコンポーネントを用意します。
+
+//list[029-C029Model.java][C029Model.java]{
+package com.example.spring.controller.c029;
+
+import java.io.Serializable;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.WebApplicationContext;
+
+@Component
+@Scope(value = WebApplicationContext.SCOPE_SESSION,
+ proxyMode = ScopedProxyMode.TARGET_CLASS)
+public class C029Model implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private String name;
+    private Integer price;
+
+    // getter、setterは省略
+}
+//}
+
+@Scopeアノテーションで、コンポーネントのスコープをSessionにします。また、Sessionスコープを利用する場合には、proxyMode属性を指定します。
+
+次に、コントローラーです。
+
+//list[029-C029Controller.java][C029Controller.java]{
+package com.example.spring.controller.c029;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/c029")
+public class C029Controller {
+    @Autowired
+    private C029Model c029Model;
+
+    @RequestMapping("/sessionStart")
+    public String sessionStart(Model model) {
+        c029Model.setName("よくわかるHttpSession");
+        c029Model.setPrice(980);
+        model.addAttribute("c029Model", c029Model);
+        return "c029/sessionScope";
+    }
+
+    @RequestMapping("/sessionScope")
+    public String sessionScope(Model model) {
+        model.addAttribute("c029Model", c029Model);
+        return "c029/sessionScope";
+    }
+}
+//}
+
+コントローラーでは、C029Modelをインジェクションしています。
+
+表示用のsessionScope.jspは次のとおりです。
+
+//list[029-sessionScope.jsp][sessionScope.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+書名: <c:out value="${c029Model.name}" /><br>
+価格: <c:out value="${c029Model.price}" /><br>
+<a href="sessionScope">画面遷移</a>
+ </body>
+</html>
+//}
+
+確認用のテストケースは次のとおりです。
+
+//list[029-C029ControllerTest.java][C029ControllerTest.jaba]{
+package com.example.spring.controller.c029;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.ModelAndView;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(locations = {
+ "file:src/main/webapp/WEB-INF/spring/spring-context.xml" })
+public class C029ControllerTest {
+    @Autowired
+    private WebApplicationContext wac;
+    @Autowired
+    private MockHttpSession mockHttpSession;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = webAppContextSetup(wac).build();
+    }
+
+    @Test
+    public void sessionStartのGET() throws Exception {
+        MvcResult mvcResult = mockMvc
+                .perform(get("/c029/sessionStart").session(mockHttpSession))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c029/sessionScope"))
+                .andExpect(model().attributeExists("c029Model")).andReturn();
+        checkC029Model(mvcResult);
+
+        mvcResult = mockMvc
+                .perform(get("/c029/sessionScope").session(mockHttpSession))
+                .andExpect(status().isOk())
+                .andExpect(view().name("c029/sessionScope"))
+                .andExpect(model().attributeExists("c029Model")).andReturn();
+        checkC029Model(mvcResult);
+    }
+
+    private void checkC029Model(MvcResult mvcResult) {
+        // モデルデータの確認
+        ModelAndView mav = mvcResult.getModelAndView();
+        Object c029ModelObject = mav.getModel().get("c029Model");
+        assertThat(c029ModelObject, is(notNullValue()));
+        assertThat(c029ModelObject, is(instanceOf(C029Model.class)));
+
+        C029Model c029Model = (C029Model) c029ModelObject;
+        assertThat(c029Model.getName(), is("よくわかるHttpSession"));
+        assertThat(c029Model.getPrice(), is(980));
+    }
+}
+//}
+
 ==={031} Flashスコープにデータを格納
 
 @<b>{タグ【031】}
