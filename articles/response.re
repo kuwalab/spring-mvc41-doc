@@ -353,7 +353,7 @@ public class C024ControllerTest {
 
 @<b>{タグ【032】}
 
-spring-context.xmlにViewResolverの設定を追加します。処理する順番（order）を1にして最初に参照するようにします。
+ダウンロードの4つ目の方法はSpringらしい方法です。まず、spring-context.xmlにViewResolverの設定を追加します。処理する順番（order）を1にして最初に参照するようにします。
 
 //list[032-spring-context.xml][spring-context.xml]{
 <bean id="xmlViewResolver" class="org.springframework.web.servlet.view.XmlViewResolver">
@@ -415,7 +415,7 @@ public class C032DownloadView extends AbstractView {
 }
 //}
 
-AbstractViewを継承し、renderMergedOutputModelメソッドを実装します。
+AbstractViewを継承し、renderMergedOutputModelメソッドを実装します。実装としてはこれまでどおりのCSVファイルを作成して出力しています。
 
 ContollerとJSPはこれまでと大きく変わりません。
 
