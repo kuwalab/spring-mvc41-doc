@@ -489,7 +489,7 @@ public class C036Controller {
 
 実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
 
-//list[036-html][html]{
+//list[036-html][出力されるHTML]{
 <!DOCTYPE html>
 <html>
  <head>
@@ -665,7 +665,7 @@ path属性で、モデルの値とタグを関連付けます。
 
 実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
 
-//list[037-HTML][HTML]{
+//list[037-html][出力されるHTML]{
 <!DOCTYPE html>
 <html>
  <head>
@@ -682,6 +682,168 @@ path属性で、モデルの値とタグを関連付けます。
    <span> <input id="selectedIsbn3" name="selectedIsbn" type="checkbox" value="789"/>
     <label for="selectedIsbn3">よく分かるSpring MVC</label></span>
      <input type="hidden" name="_selectedIsbn" value="on"/><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+label属性を指定していると、HTMLのlabel要素が出力されます。
+
+==={038} form:radiobuttonタグ
+
+@<b>{タグ【038】}
+
+form:radiobuttonタグは、HTMLの<input type="radio">タグを生成します。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[038-form:radiobutton1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+accesskey	HTML標準のaccesskey属性
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+disabled	HTML標準のdisabled属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+value		HTML標準のvalue属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+//table[038-form:raidobutton2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onblur
+onchange
+onclick
+ondblclick
+onfocus
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpring用の属性になります。
+
+//table[038-form:radiobutton3][Springの属性]{
+属性			説明
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+htmlEscape		HTMLのエスケープをするかどうか。デフォルトはtrue
+label			HTMLのlabel要素を作成し、チェックボックスと関連付ける
+path			関連付けるModelの名前
+//}
+
+使用するモデルです。ラジオボタンの初期値として利用します。
+
+//list[038-C038Model.java][C038Model.java]{
+package com.example.spring.controller.c038;
+
+public class C038Model {
+    private String tel;
+
+    // setter、getterは省略
+}
+//}
+
+サンプルのコントローラーです。
+
+//list[038-C038Controller.java][C038Controller.java]{
+package com.example.spring.controller.c038;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+@RequestMapping("/c038")
+public class C038Controller {
+    @RequestMapping("/radiobutton")
+    public String radiobutton(Model model) {
+        C038Model c038Model = new C038Model();
+        c038Model.setTel("mobile");
+
+        model.addAttribute("c038Model", c038Model);
+        return "c038/radiobutton";
+    }
+
+    @RequestMapping("/radiobuttonRecv")
+    public String radiobuttonRecv(@RequestParam String tel, Model model) {
+        model.addAttribute("recvData", tel);
+        return "c038/radiobuttonRecv";
+    }
+}
+//}
+
+コントローラーではformで利用する値をModelに格納しています。
+
+カスタムタグを使用しているJSPです。
+
+//list[038-radiobutton.jsp][radiobutton.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="radiobuttonRecv">
+   <form:radiobutton path="c038Model.tel" label="固定電話" value="home" /><br>
+   <form:radiobutton path="c038Model.tel" label="携帯電話" value="mobile" /><br>
+   <form:radiobutton path="c038Model.tel" label="なし" value="nothing" /><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+受信するradiobuttonRecv.jspです。
+
+//list[038-radiobuttonRecv.jsp][radiobuttonRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+受信データ: <c:out value="${recvData}" /><br>
+ </body>
+</html>
+//}
+
+path属性で、モデルの値とタグを関連付けます。
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[038-html][出力されるHTML]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="radiobuttonRecv">
+   <input id="tel1" name="tel" type="radio" value="home"/>
+   <label for="tel1">固定電話</label><br>
+   <input id="tel2" name="tel" type="radio" value="mobile" checked="checked"/>
+   <label for="tel2">携帯電話</label><br>
+   <input id="tel3" name="tel" type="radio" value="nothing"/>
+   <label for="tel3">なし</label><br>
    <input type="submit" value="送信">
   </form>
  </body>
