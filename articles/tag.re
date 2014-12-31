@@ -508,3 +508,185 @@ public class C036Controller {
 
 label属性を指定していると、HTMLのlabel要素が出力されます。
 
+==={037} form:checkboxesタグ
+
+@<b>{タグ【037】}
+
+form:checkboxesタグは、HTMLの&lt;input type="checkbox"&gt;タグのまとまりを生成します。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[037-form:checkboxes1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+accesskey	HTML標準のaccesskey属性
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+disabled	HTML標準のdisabled属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+//table[037-form:checkboxes2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onblur
+onchange
+onclick
+ondblclick
+onfocus
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpring用の属性になります。
+
+//table[037-form:checkboxes3][Springの属性]{
+属性			説明
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+delimiter		チェックボックスの間の区切り文字。デフォルトはなし
+element			それぞれのcheckboxを囲む要素。デフォルトはspan
+htmlEscape		HTMLのエスケープをするかどうか。デフォルトはtrue
+itemLabel		labelを出力するitemsで指定したクラスのプロパティ名
+items			checkboxを作るための配列やMap
+itemValue		valueを出力するitemsで指定したクラスのプロパティ名
+path			関連付けるModelの名前
+//}
+
+実際の例を確認していきます。まずは、一つのチェックボックスを表すモデルクラスです。isbnをvalue、nameをラベルに使用します。
+
+//list[037-C037Model.java][C037Model.java]{
+package com.example.spring.controller.c037;
+
+public class C037Model {
+    private String isbn;
+    private String name;
+
+    // setter、getterは省略
+}
+//}
+
+サンプルのコントローラです。
+
+//list[037-C037Controller.java][C037Controller.java]{
+package com.example.spring.controller.c037; 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+@RequestMapping("/c037")
+public class C037Controller {
+    @RequestMapping("/checkboxes")
+    public String checkboxes(Model model) {
+        List<C037Model> c037ModelList = new ArrayList<>();
+
+        c037ModelList.add(new C037Model("123", "よく分かるSpring"));
+        c037ModelList.add(new C037Model("456", "よく分かるJava"));
+        c037ModelList.add(new C037Model("789", "よく分かるSpring MVC"));
+
+        model.addAttribute("c037ModelList", c037ModelList);
+
+        C037Form c037Form = new C037Form();
+        c037Form.setSelectedIsbn(new String[] { "456" });
+        model.addAttribute("c037Form", c037Form);
+        return "c037/checkboxes";
+    }
+
+    @RequestMapping("/checkboxesRecv")
+    public String checkboxesRecv(
+            @RequestParam(required = false) String[] selectedIsbn, Model model) {
+        model.addAttribute("isbns", selectedIsbn);
+        return "c037/checkboxesRecv";
+    }
+}
+//}
+
+checkboxesメソッドではチェックボックスとして表示するためにBookクラスのオブジェクトのリストを作成しています。また、チェックボックスの初期値として、BookFormクラスのselectedIsbnに選択状態にするチェックボックスのisbn（value）を指定します。初期値を設定しない場合には、nullか空のString配列を渡してください。
+
+カスタムタグを使用しているJSPです。
+
+//list[037-checkboxes.jsp][checkboxes.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="checkboxesRecv">
+   <form:checkboxes path="c037Form.selectedIsbn" items="${c037ModelList}"
+    itemLabel="name" itemValue="isbn" delimiter=" " /><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+JSPではチェックボックスのリストをitems属性で指定します。itemLabelとitemValueでチェックボックスのラベルとvalueを取得するフィールド名を指定します。
+
+受信するcheckboxesRecv.jspです。
+
+//list[037-checkboxesRecv.jsp][checkboxesRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  チェックされた項目は<br>
+  <c:forEach items="${isbns}" var="isbn">
+   <c:out value="${isbn}" />
+  </c:forEach>
+ </body>
+</html>
+//}
+
+path属性で、モデルの値とタグを関連付けます。
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[037-HTML][HTML]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="checkboxesRecv">
+   <span><input id="selectedIsbn1" name="selectedIsbn" type="checkbox" value="123"/>
+    <label for="selectedIsbn1">よく分かるSpring</label></span>
+   <span><input id="selectedIsbn2" name="selectedIsbn" type="checkbox" value="456"
+    checked="checked"/>
+    <label for="selectedIsbn2">よく分かるJava</label></span>
+   <span> <input id="selectedIsbn3" name="selectedIsbn" type="checkbox" value="789"/>
+    <label for="selectedIsbn3">よく分かるSpring MVC</label></span>
+     <input type="hidden" name="_selectedIsbn" value="on"/><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+label属性を指定していると、HTMLのlabel要素が出力されます。
+
