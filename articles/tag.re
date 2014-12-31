@@ -852,3 +852,198 @@ path属性で、モデルの値とタグを関連付けます。
 
 label属性を指定していると、HTMLのlabel要素が出力されます。
 
+==={039} form:radiobuttonsタグ
+
+@<b>{タグ【039】}
+
+form:radiobuttonsタグは、HTMLの<input type="radio">タグのまとまりを生成します。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[039-form:radiobuttons1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+accesskey	HTML標準のaccesskey属性
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+disabled	HTML標準のdisabled属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+//table[039-form:radiobuttons2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onblur
+onchange
+onclick
+ondblclick
+onfocus
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpring用の属性になります。
+
+//table[039-form:radiobuttons][Springの属性]{
+属性			説明
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+delimiter		チェックボックスの間の区切り文字。デフォルトはなし
+element			それぞれのradioボタンを囲む要素。デフォルトはspan
+htmlEscape		HTMLのエスケープをするかどうか。デフォルトはtrue
+itemLabel		labelを出力するitemsで指定したクラスのプロパティ名
+items			radioボタンを作るための配列やMap
+itemValue		valueを出力するitemsで指定したクラスのプロパティ名
+path			関連付けるModelの名前
+//}
+
+実際の例を見ていきます。まずは、radioボタンの初期値を設定するモデルです。
+
+//list[039-C039Form.java][C039Form.java]{
+package com.example.spring.controller.c039;
+
+public class C039Form {
+    private String selectedIsbn;
+
+    // getter、setterは省略
+}
+//}
+
+書籍データを格納するモデルです。
+
+//list[039-C039Model.java][C039Model.java]{
+package com.example.spring.controller.c039;
+
+public class C039Model {
+    private String isbn;
+    private String name;
+
+    public C039Model(String isbn, String name) {
+        this.isbn = isbn;
+        this.name = name;
+    }
+
+    // setter、getterは省略
+}
+//}
+
+サンプルのコントローラです。
+
+//list[039-C039Controller.java][C039Controller.java]{
+package com.example.spring.controller.c039;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+@RequestMapping("/c039")
+public class C039Controller {
+    @RequestMapping("/radiobuttons")
+    public String radiobuttons(Model model) {
+        List<C039Model> c039ModelList = new ArrayList<>();
+
+        c039ModelList.add(new C039Model("123", "よく分かるSpring"));
+        c039ModelList.add(new C039Model("456", "よく分かるJava"));
+        c039ModelList.add(new C039Model("790", "よく分かるSpring MVC"));
+
+        model.addAttribute("c039ModelList", c039ModelList);
+
+        C039Form c039Form = new C039Form();
+        c039Form.setSelectedIsbn("456");
+        model.addAttribute("c039Form", c039Form);
+        return "c039/radiobuttons";
+    }
+
+    @RequestMapping("/radiobuttonsRecv")
+    public String radiobuttonsRecv(
+            @RequestParam(required = false) String selectedIsbn, Model model) {
+        model.addAttribute("isbn", selectedIsbn);
+        return "c039/radiobuttonsRecv";
+    }
+}
+//}
+
+radiobuttonsメソッドではラジオボタンとして表示するためにBookクラスのオブジェクトのリストを作成しています。また、ラジオボタンの初期値として、C039FormクラスのselectedIsbnに選択状態とするラジオボタンのisbn（value）を指定します。
+
+カスタムタグを使用しているJSPです。
+
+//list[039-radiobuttons.jsp][radiobuttons.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="radiobuttonsRecv">
+   <form:radiobuttons path="c039Form.selectedIsbn" items="${c039ModelList}" itemLabel="name" itemValue="isbn" delimiter=" " /><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+JSPではラジオボタンのリストをitems属性で指定します。itemLabelとitemValueでチェックボックスのラベルとvalueを取得するフィールド名を指定します。
+
+受信するradiobuttonsRecv.jspです。
+
+//list[039-radiobuttonsRecv.jsp][radiobuttonsRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  チェックされた項目は<c:out value="${isbn}" />
+ </body>
+</html>
+//}
+
+path属性で、モデルの値とタグを関連付けます。
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[039-html][出力されるHTML]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="radiobuttonsRecv">
+   <span><input id="selectedIsbn1" name="selectedIsbn" type="radio" value="123"/>
+    <label for="selectedIsbn1">よく分かるSpring</label></span>
+   <span> <input id="selectedIsbn2" name="selectedIsbn" type="radio" value="456" 
+    checked="checked"/>
+    <label for="selectedIsbn2">よく分かるJava</label></span>
+   <span> <input id="selectedIsbn3" name="selectedIsbn" type="radio" value="790"/>
+    <label for="selectedIsbn3">よく分かるSpring MVC</label></span><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+label属性を指定していると、HTMLのlabel要素が出力されます。
+
