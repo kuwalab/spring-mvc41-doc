@@ -350,4 +350,161 @@ public class C035Controller {
 </html>
 //}
 
+==={036} form:checkboxタグ
+
+@<b>{タグ【036】}
+
+form:checkboxタグは、HTMLの<input type="checkbox">タグを生成します。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[036-form:checkbox1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+accesskey	HTML標準のaccesskey属性
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+disabled	HTML標準のdisabled属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+value		HTML標準のvalue属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+//table[036-form:checkbox2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onblur
+onchange
+onclick
+ondblclick
+onfocus
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpring用の属性になります。
+
+//table[036-form:checkbox3][Springの属性]{
+属性			名前
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+htmlEscape		HTMLのエスケープをするかどうか。デフォルトはtrue
+label			HTMLのlabel要素を作成し、チェックボックスと関連付ける
+path			関連付けるModelの名前
+//}
+
+まず、コントローラで使用するモデルです。
+
+//list[036-C036Model.java][C036Model.java]{
+package com.example.spring.controller.c036;
+
+public class C036Model {
+    private boolean check;
+
+    public boolean isCheck() {
+        return check;
+    }
+
+    public void setCheck(boolean check) {
+        this.check = check;
+    }
+}
+//}
+
+サンプルのコントローラです。
+
+//list[036-C036Controller.java][C036Controller.java]{
+package com.example.spring.controller.c036;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/c036")
+public class C036Controller {
+    @RequestMapping("/checkbox")
+    public String checkbox(Model model) {
+        C036Model c036Model = new C036Model();
+        c036Model.setCheck(true);
+        model.addAttribute("c036Model", c036Model);
+        return "c036/checkbox";
+    }
+
+    @RequestMapping("/checkboxRecv")
+    public String checkboxRecv(String check, Model model) {
+        model.addAttribute("recvData", check);
+        return "c036/checkboxRecv";
+    }
+}
+//}
+
+コントローラではformで利用する値をModelに格納しています。
+
+カスタムタグを使用しているJSPです。
+
+//list[036-checkbox.jsp][checkbox.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="checkboxRecv">
+   <form:checkbox path="c036Model.check" label="チェック"/><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+受信するcheckboxRecv.jspです。
+
+//list[036-checkboxRecv.jsp][checkboxRecv.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+受信データ: <c:out value="${recvData}" /><br>
+ </body>
+</html>
+//}
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[036-html][html]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="checkboxRecv">
+   <input id="check1" name="check" type="checkbox" value="true" checked="checked"/>
+   <label for="check1">チェック</label><input type="hidden" name="_check" value="on"/><br>
+   <input type="submit" value="送信">
+  </form>
+ </body>
+</html>
+//}
+
+label属性を指定していると、HTMLのlabel要素が出力されます。
 
