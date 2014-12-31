@@ -398,7 +398,6 @@ public class C032DownloadView extends AbstractView {
             throws Exception {
         response.setContentType(MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE
                 + ";charset=utf-8");
-        ;
 
         response.setHeader("Content-Disposition",
                 "attachment; filename=\"test.csv\"");
