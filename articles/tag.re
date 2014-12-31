@@ -921,7 +921,7 @@ public class C039Form {
 }
 //}
 
-書籍データを格納するモデルです。
+書籍データを格納するモデルです。このクラスの一つのインスタンスが1つのラジオボタンに相当します。
 
 //list[039-C039Model.java][C039Model.java]{
 package com.example.spring.controller.c039;
@@ -994,7 +994,8 @@ radiobuttonsメソッドではラジオボタンとして表示するためにBo
  </head>
  <body>
   <form action="radiobuttonsRecv">
-   <form:radiobuttons path="c039Form.selectedIsbn" items="${c039ModelList}" itemLabel="name" itemValue="isbn" delimiter=" " /><br>
+   <form:radiobuttons path="c039Form.selectedIsbn" items="${c039ModelList}"
+    itemLabel="name" itemValue="isbn" delimiter=" " /><br>
    <input type="submit" value="送信">
   </form>
  </body>
