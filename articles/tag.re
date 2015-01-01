@@ -1355,3 +1355,154 @@ public class C041Controller {
 </html>
 //}
 
+==={042} form:optionsタグ
+
+@<b>{タグ【042】}
+
+form:optionsタグは、HTMLの&lt;option&gt;タグを生成します。このタグは、form:selectタグの中に書く必要があります。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[042-form:options1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+disabled	HTML標準のdisabled属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+
+//table[042-form:options2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onblur
+onchange
+onclick
+ondblclick
+onfocus
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpringの属性になります。
+
+//table[042-form:options3][Springの属性]{
+属性			説明
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+htmlEscape		HTMLのエスケープをするかどうか。デフォルトはtrue
+itemLabel		labelを出力するitemsで指定したクラスのプロパティ名
+items			radioボタンを作るための配列やMap
+itemValue		valueを出力するitemsで指定したクラスのプロパティ名
+//}
+
+実際の例を見ていきます。まずは選択されたの要素の初期値を設定するモデルです。
+
+//list[042-C042Form.java][C042Form.java]{
+package com.example.spring.controller.c042;
+
+public class C042Form {
+    private String selectedIsbn;
+
+    // setter、getterは省略
+}
+//}
+
+書籍データを格納するモデルです。このクラスの一つのインスタンスが1つのoption要素に相当します。
+
+//list[042-C042Model.java][C042Model.java]{
+package com.example.spring.controller.c042;
+
+public class C042Model {
+    private String isbn;
+    private String name;
+
+    // setter、getterは省略
+}
+//}
+
+サンプルのコントローラーです。
+
+//list[042-C42Controller.java][C042Controller.java]{
+package com.example.spring.controller.c042;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/c042")
+public class C042Controller {
+    @RequestMapping("/options")
+    public String options(Model model) {
+        List<C042Model> c042ModelList = new ArrayList<>();
+
+        c042ModelList.add(new C042Model("123", "よく分かるSpring"));
+        c042ModelList.add(new C042Model("456", "よく分かるJava"));
+        c042ModelList.add(new C042Model("789", "よく分かるSpring MVC"));
+
+        model.addAttribute("c042ModelList", c042ModelList);
+
+        C042Form c042Form = new C042Form();
+        c042Form.setSelectedIsbn("");
+        model.addAttribute("c042Form", c042Form);
+        return "c042/options";
+    }
+}
+//}
+
+コントローラではformで利用する値をModelに格納しています。
+
+カスタムタグを使用しているJSPです。
+
+//list[042-options.jsp][options.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form:select path="c042Form.selectedIsbn">
+   <form:options items="${c042ModelList}" itemLabel="name" itemValue="isbn" />
+  </form:select>
+ </body>
+</html>
+//}
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[042-html][出力されるHTML]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <select id="selectedIsbn" name="selectedIsbn">
+   <option value="123">よく分かるSpring</option>
+   <option value="456">よく分かるJava</option>
+   <option value="789">よく分かるSpring MVC</option>
+  </select>
+ </body>
+</html>
+//}
+
