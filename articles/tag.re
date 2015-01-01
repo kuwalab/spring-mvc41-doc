@@ -1222,3 +1222,136 @@ JSPではラジオボタンのリストをitems属性で指定します。itemLa
 </html>
 //}
 
+==={041} form:optionタグ
+
+@<b>{タグ【041】}
+
+form:optionタグは、HTMLの<input type="text">タグを生成します。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[041-form:option1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+disabled	HTML標準のdisabled属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+value		HTML標準のvalue属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+//table[041-form:select2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onblur
+onchange
+onclick
+ondblclick
+onfocus
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpring用の属性になります。
+
+//table[041-form:option3][Springの属性]{
+属性			説明
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+htmlEscape		HTMLのエスケープをするかどうか。デフォルトはtrue
+label			HTMLのlabel要素を作成し、チェックボックスと関連付ける
+//}
+
+コントローラで使用するモデルです。
+
+//list[04-C041Model.java][C041Model.java]{
+package com.example.spring.controller.c041;
+
+public class C041Model {
+    private String selectedIsbn;
+
+    public String getSelectedIsbn() {
+        return selectedIsbn;
+    }
+
+    public void setSelectedIsbn(String selectedIsbn) {
+        this.selectedIsbn = selectedIsbn;
+    }
+}
+//}
+
+サンプルのコントローラです。
+
+//list[041-C041Controller.java][C041Controller.java]{
+package com.example.spring.controller.c041;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/c041")
+public class C041Controller {
+    @RequestMapping("/option")
+    public String option(Model model) {
+        C041Model c041Model = new C041Model();
+        c041Model.setSelectedIsbn("");
+        model.addAttribute("c041Model", c041Model);
+        return "c041/option";
+    }
+}
+//}
+
+コントローラではformで利用する値をModelに格納しています。
+
+カスタムタグを使用しているJSPです。
+
+//list[041-option.jsp][option.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form:select path="c041Model.selectedIsbn">
+   <form:option value="123" label="よく分かるSpring"/>
+   <form:option value="456" label="よく分かるJava"/>
+   <form:option value="789" label="よく分かるSpring MVC"/>
+  </form:select>
+ </body>
+</html>
+//}
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[041-html][出力されるHTML]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <select id="selectedIsbn" name="selectedIsbn">
+   <option value="123">よく分かるSpring</option>
+   <option value="456">よく分かるJava</option>
+   <option value="789">よく分かるSpring MVC</option>
+  </select>
+ </body>
+</html>
+//}
+
