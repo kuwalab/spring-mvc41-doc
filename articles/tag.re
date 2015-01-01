@@ -1506,3 +1506,120 @@ public class C042Controller {
 </html>
 //}
 
+==={043} form:labelタグ
+
+@<b>{タグ【043】}
+
+form:labelタグは、HTMLの<label>タグを生成します。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[043-form:label1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+for			HTML標準のfor属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+//table[043-form:label2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onclick
+ondblclick
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpring用の属性になります。
+
+//table[043-form:label3][Springの属性]{
+属性		説明
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+htmlEscape	HTMLのエスケープをするかどうか。デフォルトはtrue
+path	
+//}
+
+コントローラで使用するモデルです。
+
+//list[043-C043Model.java][C043Model.java]{
+package com.example.spring.controller.c043;
+
+public class C043Model {
+    private String isbn;
+    private String name;
+
+    // setter、getterは省略
+}
+//}
+
+サンプルのコントローラです。
+
+//list[043-C043Controller.java][C043Controller.java]{
+package com.example.spring.controller.c043;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/c043")
+public class C043Controller {
+    @RequestMapping("/label")
+    public String label(Model model) {
+        C043Model c043Model = new C043Model("123", "よく分かるSpring");
+        model.addAttribute("c043Model", c043Model);
+        return "c043/label";
+    }
+}
+//}
+
+コントローラではformで利用する値をModelに格納しています。
+
+カスタムタグを使用しているJSPです。
+
+//list[043-label.jsp][label.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form:label path="c043Model.name">書名:</form:label>
+  <form:input path="c043Model.name" />
+ </body>
+</html>
+//}
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[043-html][出力されるHTML]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <label for="name">書名:</label>
+  <input id="name" name="name" type="text" value="よく分かるSpring"/>
+ </body>
+</html>
+//}
+
