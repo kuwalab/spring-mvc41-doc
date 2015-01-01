@@ -1048,3 +1048,177 @@ path属性で、モデルの値とタグを関連付けます。
 
 label属性を指定していると、HTMLのlabel要素が出力されます。
 
+==={040} form:selectタグ
+
+@<b>{タグ【040】}
+
+form:selectタグは、HTMLの<select>タグとその雇用そのoptionタグを生成します。
+
+その要素の内、単純にHTMLの属性に置き換えられるものは、以下の属性です。cssClassやcssStyleはそれぞれclass、style属性に置き換えられます。
+
+//table[040-form:select1][HTMLの属性]{
+属性		説明
+-------------------------------------------------------------
+accesskey	HTML標準のaccesskey属性
+cssClass	HTML標準のclass属性
+cssStyle	HTML標準のsytle属性
+dir			HTML標準のdir属性
+disabled	HTML標準のdisabled属性
+id			HTML標準のid属性
+lang		HTML標準のlang属性
+multiple	HTML標準のmultiple要素。trueかfalseを指定する
+size		HTML標準のsize属性
+tabindex	HTML標準のtabindex
+title		HTML標準のtitle属性
+//}
+
+その他、JavaScriptのDOMレベル0イベントとして以下の属性が用意されています。それぞれ同名の属性になります。
+
+//table[040-form:select2][イベントハンドラの属性]{
+属性
+-------------------------------------------------------------
+onblur
+onchange
+onclick
+ondblclick
+onfocus
+onkeydown
+onkeypress
+onkeyup
+onmousedown
+onmousemove
+onmouseout
+onmouseover
+onmouseup
+//}
+
+残りがSpring用の属性になります。
+
+//table[040-form:select3][Springの属性]{
+属性			説明
+-------------------------------------------------------------
+cssErrorClass	Validationのエラー時のclass属性
+delimiter		チェックボックスの間の区切り文字。デフォルトはなし
+element			それぞれのradioボタンを囲む要素。デフォルトはspan
+htmlEscape		HTMLのエスケープをするかどうか。デフォルトはtrue
+itemLabel		labelを出力するitemsで指定したクラスのプロパティ名
+items			radioボタンを作るための配列やMap
+itemValue		valueを出力するitemsで指定したクラスのプロパティ名
+path			関連付けるModelの名前
+//}
+
+実際の例を見ていきます。まずは選択されたの要素の初期値を設定するモデルです。
+
+//list[040-C040Form.java][C040Form.java]{
+package com.example.spring.controller.c040;
+
+public class C040Form {
+    private String selectedIsbn;
+
+    // setter、getterは省略
+}
+//}
+
+書籍データを格納するモデルです。このクラスの一つのインスタンスが1つのoption要素に相当します。
+
+//list[040-C040Model.java][C040Model.java]{
+package com.example.spring.controller.c040;
+
+public class C040Model {
+    private String isbn;
+    private String name;
+
+    public C040Model(String isbn, String name) {
+        this.isbn = isbn;
+        this.name = name;
+    }
+
+    // setter、getterは省略
+}
+//}
+
+サンプルのコントローラーです。
+
+//list[040-C040Controller.java][C040Controller.java]{
+package com.example.spring.controller.c040;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/c040")
+public class C040Controller {
+    @RequestMapping("/select")
+    public String select(Model model) {
+        List<C040Model> c040ModelList = new ArrayList<>();
+
+        c040ModelList.add(new C040Model("123", "よく分かるSpring"));
+        c040ModelList.add(new C040Model("456", "よく分かるJava"));
+        c040ModelList.add(new C040Model("789", "よく分かるSpring MVC"));
+
+        model.addAttribute("c040ModelList", c040ModelList);
+
+        C040Form c040Form = new C040Form();
+        c040Form.setSelectedIsbn("456");
+        model.addAttribute("c040Form", c040Form);
+        return "c040/select";
+    }
+}
+//}
+
+optionメソッドではラジオボタンとして表示するためにC040Modelクラスのオブジェクトのリストを作成しています。また、ラジオボタンの初期値として、C040FormクラスのselectedIsbnに選択状態とするisbn（value）を指定します。
+
+カスタムタグを使用しているJSPです。
+
+//list[040-select.jsp][select.jsp]{
+<%@page contentType="text/html; charset=utf-8" %><%--
+--%><!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="selectRecv">
+   <form:select path="c040Form.selectedIsbn" items="${c040ModelList}" itemLabel="name"
+    itemValue="isbn" delimiter=" " /><br>
+   <form:select path="c040Form.selectedIsbn" multiple="true" size="3"
+    items="${c040ModelList}" itemLabel="name" itemValue="isbn" delimiter=" " /><br>
+  </form>
+ </body>
+</html>
+//}
+
+JSPではラジオボタンのリストをitems属性で指定します。itemLabelとitemValueでチェックボックスのラベルとvalueを取得するフィールド名を指定します。
+
+実際に動作させ、出力されるHTMLは以下のようになります（見やすくするために改行を入れています）。
+
+//list[040-html][出力されるHTML]{
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>サンプル</title>
+ </head>
+ <body>
+  <form action="selectRecv">
+   <select id="selectedIsbn" name="selectedIsbn">
+    <option value="123">よく分かるSpring</option>
+    <option value="456" selected="selected">よく分かるJava</option>
+    <option value="789">よく分かるSpring MVC</option>
+   </select><br>
+   <select id="selectedIsbn" name="selectedIsbn" multiple="multiple" size="3">
+    <option value="123">よく分かるSpring</option>
+    <option value="456" selected="selected">よく分かるJava</option>
+    <option value="789">よく分かるSpring MVC</option>
+   </select>
+   <input type="hidden" name="_selectedIsbn" value="1"/><br>
+  </form>
+ </body>
+</html>
+//}
+
